@@ -10,6 +10,8 @@ app.use(cors());
 app.use(express.json());
 
 const upload = multer({ storage: multer.memoryStorage() });
+console.log("Key length:", process.env.OPENAI_API_KEY?.length);
+
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.post("/analyze", upload.single("file"), async (req, res) => {
