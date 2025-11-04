@@ -20,7 +20,7 @@ app.post("/analyze", upload.single("file"), async (req, res) => {
     const dataUrl = `data:${req.file.mimetype};base64,${base64}`;
 
     const prompt = `
-Analyze this NFT. 
+Analyze this NFT.
 Return ONLY JSON format exactly like this:
 
 {
@@ -60,7 +60,12 @@ Return ONLY JSON format exactly like this:
   }
 });
 
-// ✅ REQUIRED FOR DEPLOYMENT (Render / Railway / Vercel / DigitalOcean)
+// ✅ Root route so Render doesn’t show "Cannot GET /"
+app.get("/", (req, res) => {
+  res.send("✅ Billions NFT backend is running");
+});
+
+// ✅ Required for deployment
 app.listen(process.env.PORT || 5000, () => {
   console.log(`✅ Server running on ${process.env.PORT || 5000}`);
 });
