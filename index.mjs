@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 const upload = multer({ storage: multer.memoryStorage() });
-const client = new OpenAI({ apiKey: sk-live-Ow-ncuvE4qVD5F8EUQIr9ADqZqqydzhb3rWrhxl0eQLkG3NiLiPleQc0lC9WpbgKlPRJccVzstT3BlbkFJi-NykyKWKmBREtKcRx7slqfNGQiNQD45se8GX24fh7qC0bzjA0Qqlu-E50N3w9JKCJcY9aqiwA });
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.post("/analyze", upload.single("file"), async (req, res) => {
   try {
