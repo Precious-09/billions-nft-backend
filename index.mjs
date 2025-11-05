@@ -32,18 +32,22 @@ Analyze this NFT image and return JSON only:
 Strict JSON format. Do not add explanation text.
 `;
 
-    const response = await client.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages: [
+    const response = await client.responses.create({
+  model: "gpt-4o-mini",
+  input: [
+    {
+      role: "user",
+      content: [
+        { type: "input_text", text: prompt },
         {
-          role: "user",
-          content: [
-            { type: "text", text: prompt },
-            { type: "image_url", image_url: dataUrl }
-          ]
+          type: "input_image",
+          image_url: { url: dataUrl }
         }
       ]
-    });
+    }
+  ]
+});
+
 
     const output = response.choices?.[0]?.message?.content || "";
     let json;
