@@ -41,13 +41,12 @@ Strict JSON format. Do not add explanation text.
         { type: "input_text", text: prompt },
         {
           type: "input_image",
-          image_url: { url: dataUrl }
+          image: dataUrl
         }
       ]
     }
   ]
 });
-
 
     const output = response.choices?.[0]?.message?.content || "";
     let json;
