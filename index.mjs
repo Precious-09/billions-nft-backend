@@ -10,41 +10,39 @@ app.use(cors());
 app.use(express.json());
 
 const upload = multer({ storage: multer.memoryStorage() });
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.post("/analyze", upload.single("file"), async (req, res) => {
   try {
-    if (!req.file) return res.json({ error: "No file uploaded" });
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
     const base64 = req.file.buffer.toString("base64");
     const dataUrl = `data:${req.file.mimetype};base64,${base64}`;
 
-    const prompt = `
-Analyze this NFT image and return JSON only:
+    const promptText = `
+Analyze this NFT image and return ONLY JSON format exactly like:
+
 {
   "traits": ["trait1", "trait2", "trait3"],
   "personality": "short human personality vibe"
 }
-Strict JSON only. No explanation text.
 `;
+    // Build inputs array
+    const inputs = [
+      { type: "input_text", text: promptText },
+      { type: "input_image", image_url: dataUrl }
+    ];
 
+    // Call OpenAI
     const response = await client.responses.create({
       model: "gpt-4o-mini",
-      input: {
-        role: "user",
-        content: [
-          { type: "input_text", text: prompt },
-          { type: "input_image", image_url: dataUrl }
-        ]
-      }
+      input: inputs
     });
 
     const output = response.output_text;
     let json;
-
     try {
       json = JSON.parse(output);
     } catch {
@@ -52,22 +50,25 @@ Strict JSON only. No explanation text.
       json = match ? JSON.parse(match[0]) : null;
     }
 
-    if (!json) return res.json({ error: "Invalid model output", raw: output });
+    if (!json) {
+      return res.status(500).json({ error: "Invalid model output", raw: output });
+    }
 
     res.json(json);
+
   } catch (err) {
-    console.error(err);
-    res.json({ traits: "Error", personality: err.message });
+    console.error("Backend error:", err);
+    res.status(500).json({ traits: "Error", personality: err.message });
   }
 });
 
-
-// ✅ Live check route
+// Health route
 app.get("/", (req, res) => {
   res.send("✅ Billions NFT backend is running");
 });
 
-// ✅ Start server
-app.listen(process.env.PORT || 5000, () => {
-  console.log(`✅ Server running on ${process.env.PORT || 5000}`);
+// Start server
+const port = process.env.PORT || 5000;
+app.listen(port, () => {
+  console.log(`✅ Server running on ${port}`);
 });
