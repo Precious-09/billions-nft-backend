@@ -11,7 +11,9 @@ app.use(express.json());
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 app.post("/analyze", upload.single("file"), async (req, res) => {
   try {
@@ -23,32 +25,29 @@ app.post("/analyze", upload.single("file"), async (req, res) => {
     const dataUrl = `data:${req.file.mimetype};base64,${base64}`;
 
     const prompt = `
-Analyze this NFT image and return JSON only:
+Analyze this NFT image and return ONLY JSON:
 
 {
 "traits": ["trait1", "trait2", "trait3"],
 "personality": "short human personality vibe"
 }
-Strict JSON format. Do not add explanation text.
+No text outside JSON.
 `;
 
     const response = await client.responses.create({
-  model: "gpt-4o-mini",
-  input: [
-    {
-      role: "user",
-      content: [
-        { type: "input_text", text: prompt },
+      model: "gpt-4o-mini",
+      input: [
         {
-          type: "input_image",
-          image: dataUrl
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: dataUrl }
+          ]
         }
       ]
-    }
-  ]
-});
+    });
 
-    const output = response.choices?.[0]?.message?.content || "";
+    const output = response.output_text;
     let json;
 
     try {
@@ -69,7 +68,7 @@ Strict JSON format. Do not add explanation text.
   }
 });
 
-// ✅ Route to verify backend is live
+// ✅ Live check route
 app.get("/", (req, res) => {
   res.send("✅ Billions NFT backend is running");
 });
