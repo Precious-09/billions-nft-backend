@@ -17,34 +17,29 @@ const client = new OpenAI({
 
 app.post("/analyze", upload.single("file"), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.json({ error: "No file uploaded" });
-    }
+    if (!req.file) return res.json({ error: "No file uploaded" });
 
     const base64 = req.file.buffer.toString("base64");
     const dataUrl = `data:${req.file.mimetype};base64,${base64}`;
 
     const prompt = `
-Analyze this NFT image and return ONLY JSON:
-
+Analyze this NFT image and return JSON only:
 {
-"traits": ["trait1", "trait2", "trait3"],
-"personality": "short human personality vibe"
+  "traits": ["trait1", "trait2", "trait3"],
+  "personality": "short human personality vibe"
 }
-No text outside JSON.
+Strict JSON only. No explanation text.
 `;
 
     const response = await client.responses.create({
       model: "gpt-4o-mini",
-      input: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: prompt },
-            { type: "image_url", image_url: dataUrl }
-          ]
-        }
-      ]
+      input: {
+        role: "user",
+        content: [
+          { type: "input_text", text: prompt },
+          { type: "input_image", image_url: dataUrl }
+        ]
+      }
     });
 
     const output = response.output_text;
@@ -57,16 +52,15 @@ No text outside JSON.
       json = match ? JSON.parse(match[0]) : null;
     }
 
-    if (!json) {
-      return res.json({ error: "Invalid model output", raw: output });
-    }
+    if (!json) return res.json({ error: "Invalid model output", raw: output });
 
     res.json(json);
   } catch (err) {
     console.error(err);
-    return res.json({ traits: "Error", personality: err.message });
+    res.json({ traits: "Error", personality: err.message });
   }
 });
+
 
 // ✅ Live check route
 app.get("/", (req, res) => {
