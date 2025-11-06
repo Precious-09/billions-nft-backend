@@ -9,10 +9,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ✅ Multer (memory storage)
 const upload = multer({ storage: multer.memoryStorage() });
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// ✅ 1. ANALYZE NFT
 app.post("/analyze", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
@@ -56,9 +58,7 @@ Return ONLY valid JSON:
       json = match ? JSON.parse(match[0]) : null;
     }
 
-    if (!json) {
-      return res.json({ error: "Invalid model output", raw: output });
-    }
+    if (!json) return res.json({ error: "Invalid model output", raw: output });
 
     res.json(json);
 
@@ -71,6 +71,24 @@ Return ONLY valid JSON:
   }
 });
 
+// ✅ 2. UPLOAD IMAGE (needed for Safari/mobile canvas export)
+app.post("/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) return res.json({ error: "No file uploaded" });
+
+    // ✅ Convert buffer → SAFARI-SAFE base64 URL
+    const base64 = req.file.buffer.toString("base64");
+    const url = `data:${req.file.mimetype};base64,${base64}`;
+
+    res.json({ url });
+
+  } catch (err) {
+    console.log(err);
+    res.json({ error: "Upload failed" });
+  }
+});
+
+// ✅ Default route
 app.get("/", (req, res) => res.send("✅ Billions NFT backend running"));
 
 app.listen(process.env.PORT || 5000, () =>
